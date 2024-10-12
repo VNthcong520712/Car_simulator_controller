@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import time
+import os
 from io import BytesIO
 from multiprocessing import Process, Queue, Manager
 
@@ -14,8 +15,9 @@ from Gray_lane_cal import cal_steering
 from traffic_sign_detection import *
 
 # Initalize traffic sign classifier
+file_path = os.path.dirname(os.path.realpath(__file__))
 traffic_sign_model = cv2.dnn.readNetFromONNX(
-    r"D:\Documents\Learning\Programming\AI\via\via_from_git\hello-via\p2_traffic_sign_detection\traffic_sign_classifier_lenet_v3.onnx")
+    fr"{file_path}\traffic_sign_classifier_lenet_v3.onnx")
 
 # Global queue to save current image
 # We need to run the sign classification model in a separate process
