@@ -26,7 +26,7 @@ g_image_queue = Queue(maxsize=5)
 
 # Function to run sign classification model continuously
 # We will start a new process for this
-def process_traffic_sign_loop(g_image_queue, pre_signs, current_signs, processed, public_throttle, public_steering):
+def process_traffic_sign_loop(g_image_queue, pre_signs, current_signs, processed):
     while True:
         if g_image_queue.empty():
             time.sleep(0.1)
@@ -35,15 +35,16 @@ def process_traffic_sign_loop(g_image_queue, pre_signs, current_signs, processed
 
         # Prepare visualization image
         draw = image.copy()
-        x_d = image.copy()
+
         # Detect traffic signs
+        # Store the sign used to compare and get the loss sign
         pre_signs[:] = []
         pre_signs.extend(current_signs)
         current_signs[:] = []
         current_signs.extend(list(detect_traffic_signs(image, traffic_sign_model, None)))
-        loss_sign = None
-        # public_throttle.value, public_steering.value = 0,0
+        loss_sign = None 
 
+        # Compare and get the lossing sign
         if len(pre_signs) > 0:
             if len(current_signs) == 0:
                 loss_sign = pre_signs[0][0]
@@ -53,16 +54,16 @@ def process_traffic_sign_loop(g_image_queue, pre_signs, current_signs, processed
                 else:
                     loss_sign = None
         
+        # Assignt loss_sign for processed, which is used to check the turn is do or don't
         if len(processed[0]) == 0 and loss_sign:
             processed[:] = []
-            processed.extend([loss_sign, time.time()])
+            processed.extend([loss_sign, time.time()]) # get the time when sign loss
 
         # Show the result to a window
         cv2.imshow("Traffic signs", draw)
         cv2.waitKey(1)
 
-
-async def process_image(websocket, path, public_throttle, public_steering, processed):
+async def process_image(websocket, path, processed):
     async for message in websocket:
         # Get image from simulation
         data = json.loads(message)
@@ -74,13 +75,15 @@ async def process_image(websocket, path, public_throttle, public_steering, proce
         # Prepare visualization image
         draw = image.copy()
 
-        # Send back throttle and steering angle
+        # Is processed command is request
         sign_ = None
         if len(processed[0]) > 0:
             sign_ = processed[0]
-
+        
+        # Cal and get throttle and steering angle
         throttle, steering_angle, done = cal_steering(image, turn_range = 0.85, sign=sign_, draw=draw)
 
+        # The turn have done of wait time is out, remove processed sign
         if done is True or time.time() - processed[1] > 5:
             processed[:] = ['',0]        
 
@@ -97,20 +100,19 @@ async def process_image(websocket, path, public_throttle, public_steering, proce
             {"throttle": throttle, "steering": steering_angle})
         await websocket.send(message)
 
-
-async def main(public_throttle, public_steering, processed):
-    async with websockets.serve(lambda wbsoc, pat:process_image(wbsoc, pat, public_throttle, public_steering, processed), "0.0.0.0", 4567, ping_interval=None):
+async def main(processed):
+    async with websockets.serve(lambda wbsoc, path:process_image(wbsoc, path, processed), "0.0.0.0", 4567, ping_interval=None):
         await asyncio.Future()  # run forever
 
 if __name__ == '__main__':
+    # The sharing variables
     man = Manager()
     pre_signs = man.list([]) 
     current_signs = man.list([])
     processed = man.list(['',0])
-    public_throttle = man.Value(float, 0.0)
-    public_steering = man.Value(float, 0.0)
 
+    # Multiprocessing start
     p = Process(target=process_traffic_sign_loop, 
-                args=(g_image_queue, pre_signs, current_signs, processed, public_throttle, public_steering))
+                args=(g_image_queue, pre_signs, current_signs, processed))
     p.start()
-    asyncio.run(main(public_throttle, public_steering, processed))
+    asyncio.run(main(processed))
