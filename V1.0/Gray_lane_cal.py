@@ -1,39 +1,45 @@
 import cv2, math, random
 import numpy as np
 
+# The checking variable, check if the turning done or didn't do
 intersect_turn = None
+# The turn stored variable, use when the intersection desn't have sign
+store_turn = None
 
 def calculate_steering_angle(lane_center, img_center, width):
 	deviation = lane_center - img_center
-	max_dev = img_center
-	# Calculate steering angle
+	# Calculate the steering angle (Pass your fomular here)
 	r = 0.55 * width
 	angle = math.degrees(math.asin(deviation / r))
 	steering_angle = (0.1*angle**2)/25
 	steering_angle = steering_angle if angle >= 0 else -steering_angle
-	return np.clip(steering_angle, -1, 1)
+	return steering_angle
 
 def detect_intersection(contours, image):
+	# With 0.3 the last of img_height, we get the differece between normal lane and intersection if larger than 69000
+	# If you change the scaning range, you need to adjust the number 69000 with your experimentation
 	if cv2.contourArea(contours) > 69000:
+		# Three bliock is checked the posibility direction
 		img_left = image[:,:41]
 		img_right = image[:,image.shape[1]-41:]
 		img_top = image[:80, int(0.3333*image.shape[1]):int(0.6666*image.shape[1])]
 
+		# Cal the mean to know it is real direct or non
 		mean_left = np.mean(img_left)
 		mean_right = np.mean(img_right)
 		mean_top = np.mean(img_top)
 
 		means = [0, 0, 0]
 		for id, mean in enumerate((mean_left, mean_top, mean_right), -1):
-			if mean > 100:
-				means[id + 1] = id*0.83 + 0.0001
+			if mean > 100: # The avarage for full white is 255, change to see the difference
+				means[id + 1] = id*0.83 + 0.0001 # 0.0001 ensure that go straight larger than 0
 		return {"left":means[0], "straight":means[1], "right":means[2]} 
 	return {"left":0, "straight":0, "right":0}
 
 def cal_steering(image, turn_range, sign = None, draw = None):
-	global intersect_turn
+	global intersect_turn, store_turn
 	# Requiment condition
-	scan_range = 0.7
+	scan_range = 0.7 # Scannig range, if you change this number, you must change the area in detect_intersection
 	if scan_range >= turn_range:
 		raise "scan_range can not larger than turn_range"
 
@@ -57,7 +63,7 @@ def cal_steering(image, turn_range, sign = None, draw = None):
 
 	# The scan region
 	turn_angle = int(img_height*turn_range)
-	scan_region = int(img_height*scan_range) - 80 # 80 is forward checking value
+	scan_region = int(img_height*scan_range) - 80 # 80 is the top block checking height
 
 	# Cut image
 	scan_img = image[scan_region:, :].copy()
@@ -94,22 +100,28 @@ def cal_steering(image, turn_range, sign = None, draw = None):
 			# Cal steering angle
 			steering_angle = calculate_steering_angle(lane_center_x, img_center, img_width)
 
+		# Intersection checking
 		intersec = detect_intersection(largest_contour_scan, mask_gray_clean)
-		if list(intersec.values()).count(0) < 2:
-			if sign:
+		if list(intersec.values()).count(0) < 2: # Check if it is intersection or turn 
+			if sign: # If the sign is present
 				steering_angle = intersec[sign]
-			else:
-				if intersec['straight']:
+			else: # If not, random direction
+				if intersec['straight']: # Priority the straight line
 					steering_angle = intersec["straight"]
 				else:
-					choice = random.choice(['left', 'right'])
+					if store_turn is None: # Store the turn choice, if yon don't do it, the choice will random over time
+						choice = random.choice(['left', 'right'])
+						store_turn = choice
+					else:
+						choice = store_turn
 					steering_angle = intersec[choice]
 			intersect_turn = False
-		else:
+		else: # When car turn the first time, the area change, so it use to check the turn is done or not
 			if intersect_turn is False:
 				intersect_turn = True
 			else:
 				intersect_turn = None
+				store_turn = None
 
 	if draw is not None:	
 		# Draw the lane center on the frame
@@ -117,8 +129,7 @@ def cal_steering(image, turn_range, sign = None, draw = None):
 			draw = cv2.circle(draw, (lane_center_x, lane_center_y), 5, (0, 0, 255), -1)
 		except:
 			pass
-		draw = cv2.line(draw, (0, scan_region+80), (img_width, scan_region+80), (255, 0, 0), 2)
-		draw = cv2.line(draw, (0, turn_angle), (img_width, turn_angle), (0, 255, 0), 2)
-			
+		draw = cv2.line(draw, (0, scan_region+80), (img_width, scan_region+80), (255, 0, 0), 2) # The scan region line
+		draw = cv2.line(draw, (0, turn_angle), (img_width, turn_angle), (0, 255, 0), 2) # The turning decision line		
 	
 	return throttle, steering_angle, intersect_turn
