@@ -77,6 +77,9 @@ def detect_traffic_signs(img, model, draw=None):
         x, y, w, h = bbox
         sub_image = img[y:y+h, x:x+w]
 
+        if w*h < 3800 or x < img.shape[1]/2: # Set the limitation for sign detection
+            continue
+
         if sub_image.shape[0] < 20 or sub_image.shape[1] < 20:
             continue
 
@@ -99,7 +102,8 @@ def detect_traffic_signs(img, model, draw=None):
         if score < 0.5:
             continue
 
-        signs.append([classes[cls], x, y, w, h])
+        # signs.append([classes[cls], x, y, w, h])
+        signs.append(classes[cls])
 
         # Draw prediction result
         if draw is not None:
