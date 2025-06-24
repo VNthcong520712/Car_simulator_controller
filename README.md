@@ -32,7 +32,8 @@ To get started with this project, follow these steps:
 This project is a collaborative effort by:
 
 * **[VNthcong520712](https://github.com/VNthcong520712)**
-* **B**
+* **[NguyenLeMinh-dev](https://github.com/NguyenLeMinh-dev)**
+* **[truong1824](https://github.com/truong1824)**
 
 ## Repository
 
