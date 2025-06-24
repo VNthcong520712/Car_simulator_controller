@@ -31,7 +31,7 @@ To get started with this project, follow these steps:
 
 This project is a collaborative effort by:
 
-* **[Your Name/GitHub Username]**
+* **[VNthcong520712](https://github.com/VNthcong520712)**
 * **B**
 
 ## Repository
