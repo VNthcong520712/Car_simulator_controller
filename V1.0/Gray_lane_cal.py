@@ -1,4 +1,5 @@
 import cv2, math, random
+from config import *
 import numpy as np
 
 # The checking variable, check if the turning done or didn't do
@@ -8,7 +9,7 @@ throttle = 0.5
 def calculate_steering_angle(lane_center, img_center, width):
 	deviation = lane_center - img_center
 	# Calculate the steering angle (Paste your fomular here)
-	r = 0.55 * width
+	r = RADIUS_RATIO * width
 	angle = math.degrees(math.asin(deviation / r))
 	steering_angle = 1.5*(angle/25)**2
 	steering_angle = steering_angle if angle >= 0 else -steering_angle
@@ -18,7 +19,7 @@ def detect_intersection(contours, image):
 	# With 0.3 the last of img_height, we get the differece between normal lane and intersection if larger than 69000
 	# If you change the scaning range, you need to adjust the number 69000 with your experimentation
 	out = []
-	if cv2.contourArea(contours) > 69000:
+	if cv2.contourArea(contours) > CONTOUR_AREA:
 		# Three bliock is checked the posibility direction
 		img_left = image[:,:41]
 		img_right = image[:,image.shape[1]-41:]
@@ -29,9 +30,9 @@ def detect_intersection(contours, image):
 
 		# Cal the mean to know it is real direct or non
 		means= {'left':np.mean(img_left), 'straight':len(black_cons), 'right':np.mean(img_right)}
-		threshold = {'left':100, 'straight':2, 'right':100} # The threshold to check each direction
+		threshold = {'left':range(100, 255), 'straight':[0,2], 'right':range(100,255)} # The threshold to check each direction
 		for dir in means.keys():
-			if threshold[dir] <= means[dir]:
+			if means[dir] in threshold[dir]:
 				out.append(dir)		
 	return out
 
@@ -141,7 +142,7 @@ wheel = Movement() # call the class
 def cal_steering(image, turn_range, sign = None, draw = None):
 	global throttle,intersect_turn
 	# Requiment condition
-	scan_range = 0.7 # Scannig range, if you change this number, you must change the area in detect_intersection
+	scan_range = SCAN_RANGE # Scannig range, if you change this number, you must change the area in detect_intersection
 	if scan_range >= turn_range:
 		raise "scan_range can not larger than turn_range"
 
@@ -152,11 +153,11 @@ def cal_steering(image, turn_range, sign = None, draw = None):
 	steering_angle = 0.0
 
 	# Define color range for the gray lane in HSV
-	lower_gray = np.array([0,0,50])
-	upper_gray = np.array([180,50,150])
+	lower_gray = LOWER_BLACK
+	upper_gray = UPPER_BLACK
 
 	# Kernel (morphological)
-	kernel = np.ones([5,5], np.uint8)
+	kernel = KERNEL
 
 	# Height and width
 	img_height = image.shape[0]
