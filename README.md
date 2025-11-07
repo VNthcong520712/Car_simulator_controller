@@ -33,8 +33,9 @@ This project is a collaborative effort by:
 
 * **[VNthcong520712](https://github.com/VNthcong520712)**
 * **[NguyenLeMinh-dev](https://github.com/NguyenLeMinh-dev)**
-* **[truong1824](https://github.com/truong1824)**
+* **[truongedu](https://github.com/truongedu)**
 
 ## Repository
 
 The project's code is hosted on GitHub: [https://github.com/VNthcong520712/Car\_simulator\_controller](https://github.com/VNthcong520712/Car_simulator_controller)
+
