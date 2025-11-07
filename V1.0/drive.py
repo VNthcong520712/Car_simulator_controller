@@ -46,8 +46,8 @@ def process_traffic_sign_loop(g_image_queue, current_signs, processed):
             processed[:] = ['',0]
 
         # Show the result to a window
-        # cv2.imshow("Traffic signs", draw)
-        # cv2.waitKey(1)
+        cv2.imshow("Traffic signs", draw)
+        cv2.waitKey(1)
 
 async def process_image(websocket, path, processed):
     async for message in websocket:
@@ -68,7 +68,7 @@ async def process_image(websocket, path, processed):
                 sign_ = processed[0]
         
         # Cal and get throttle and steering angle
-        print(sign_)
+        # print("Detected sign:",sign_)
         throttle, steering_angle, done = cal_steering(image, turn_range = 0.85, sign=sign_, draw=draw)
 
         # The turn have done of wait time is out, remove processed sign

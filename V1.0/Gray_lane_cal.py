@@ -27,9 +27,8 @@ def detect_intersection(contours, image):
 
 		black_cons, _ = cv2.findContours(cv2.bitwise_not(img_top), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 		black_cons = [x for x in black_cons if cv2.contourArea(x) > 2000]
-
 		# Cal the mean to know it is real direct or non
-		means= {'left':np.mean(img_left), 'straight':len(black_cons), 'right':np.mean(img_right)}
+		means= {'left':np.mean(img_left).astype(int), 'straight':len(black_cons), 'right':np.mean(img_right).astype(int)}
 		threshold = {'left':range(100, 255), 'straight':[0,2], 'right':range(100,255)} # The threshold to check each direction
 		for dir in means.keys():
 			if means[dir] in threshold[dir]:
@@ -60,7 +59,7 @@ class Movement: # Movement class
 		'''
 		if sign is not None:
 			self.sign = sign
-			# self.processing = None
+			self.processing = None
 		if intersec_direct is not None:
 			self.intersec_direct = intersec_direct
 		if steering_angle is not None:
@@ -106,14 +105,15 @@ class Movement: # Movement class
 			if isinstance(self.processing, str):
 				execute[self.processing](im_cen, im_wi, draw)
 			else:
-				if self.sign: # if this intersect has sign
-					if self.sign in self.intersec_direct: # if this sign is correct
-						execute[self.sign](im_cen, im_wi, draw)
-					elif 'no_' in self.sign: # If it is a forbidden sign
+				if self.sign[0]: # if this intersect has sign
+					print(self.sign[0], self.intersec_direct)
+					if self.sign[0] in self.intersec_direct: # if this sign is correct
+						execute[self.sign[0]](im_cen, im_wi, draw)
+					elif 'no_' in self.sign[0]: # If it is a forbidden sign
 						if 'straight' in self.intersec_direct: # If go straight is present, sign is invalid
 							execute['straight'](im_cen, im_wi, draw)
 						else: # Force the sign, one only is avaiable
-							execute['left'](im_cen, im_wi, draw) if self.sign == 'no_right' else execute['right'](im_cen, im_wi, draw)
+							execute['left'](im_cen, im_wi, draw) if self.sign[0] == 'no_right' else execute['right'](im_cen, im_wi, draw)
 					else: # The fake sign
 						if 'straight' in self.intersec_direct: # If go straight is present, sign is invalid
 							execute['straight'](im_cen, im_wi, draw)
@@ -130,8 +130,8 @@ class Movement: # Movement class
 			if isinstance(self.processing, str):
 				execute[self.processing](im_cen, im_wi, draw)
 			else:
-				if self.sign and self.sign in self.intersec_direct: # If the sign match the direction
-					execute[self.sign](im_cen, im_wi, draw)
+				if self.sign[0] and self.sign[0] in self.intersec_direct: # If the sign match the direction
+					execute[self.sign[0]](im_cen, im_wi, draw)
 				else:
 					execute['straight'](im_cen, im_wi, draw)	
 					
@@ -212,6 +212,7 @@ def cal_steering(image, turn_range, sign = None, draw = None):
 		intersec = detect_intersection(largest_contour_scan, mask_gray_clean)
 		wheel.update(sign, intersec, steering_angle, [leftmost[0], rightmost[0]])
 		steering_angle = wheel.process(img_center, img_width, draw)
+		# print("After udpated steering angle:", steering_angle, k == steering_angle)
 		intersect_turn = wheel.processing if not isinstance(wheel.processing, str) else False
 		
 	if draw is not None:	
