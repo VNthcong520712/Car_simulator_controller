@@ -17,7 +17,7 @@ from traffic_sign_detection import *
 # Initalize traffic sign classifier
 file_path = os.path.dirname(os.path.realpath(__file__))
 traffic_sign_model = cv2.dnn.readNetFromONNX(
-    fr"{file_path}\traffic_sign_classifier_lenet_v3.onnx")
+    fr"{file_path}/traffic_sign_classifier_lenet_v3.onnx")
 
 # Global queue to save current image
 # We need to run the sign classification model in a separate process
@@ -49,7 +49,7 @@ def process_traffic_sign_loop(g_image_queue, current_signs, processed):
         cv2.imshow("Traffic signs", draw)
         cv2.waitKey(1)
 
-async def process_image(websocket, path, processed):
+async def process_image(websocket, processed):
     async for message in websocket:
         # Get image from simulation
         data = json.loads(message)
@@ -88,8 +88,11 @@ async def process_image(websocket, path, processed):
             {"throttle": throttle, "steering": steering_angle})
         await websocket.send(message)
 
+# async def main(processed):
+#     async with websockets.serve(lambda wbsoc, path:process_image(wbsoc, path, processed), "0.0.0.0", 4567, ping_interval=None):
+#         await asyncio.Future()  # run forever
 async def main(processed):
-    async with websockets.serve(lambda wbsoc, path:process_image(wbsoc, path, processed), "0.0.0.0", 4567, ping_interval=None):
+    async with websockets.serve(lambda wbsoc: process_image(wbsoc, processed), "localhost", 4567, ping_interval=None):
         await asyncio.Future()  # run forever
 
 if __name__ == '__main__':

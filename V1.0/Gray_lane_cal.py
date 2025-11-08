@@ -4,7 +4,7 @@ import numpy as np
 
 # The checking variable, check if the turning done or didn't do
 intersect_turn = None
-throttle = 0.5
+throttle = 0.6
 
 def calculate_steering_angle(lane_center, img_center, width):
 	deviation = lane_center - img_center
@@ -57,16 +57,32 @@ class Movement: # Movement class
 		Object is a list object that need to be updated
 		Data is a correspond data for those object
 		'''
-		if sign is not None:
-			self.sign = sign
-			self.processing = None
+		# if sign is not None:
+		# 	self.sign = sign
+		# 	self.processing = None
+		# if intersec_direct is not None:
+		# 	self.intersec_direct = intersec_direct
+		# if steering_angle is not None:
+		# 	self.steering_angle = steering_angle
+		# if left_right_most_x is not None:
+		# 	self.left_right_most_x = left_right_most_x
+		if sign: 
+			
+			if sign[0] != '': 
+				self.sign = [sign[0]] 
+			else:
+				self.sign = [] 
+		else:
+				self.sign = []
+
+		
 		if intersec_direct is not None:
 			self.intersec_direct = intersec_direct
 		if steering_angle is not None:
 			self.steering_angle = steering_angle
 		if left_right_most_x is not None:
 			self.left_right_most_x = left_right_most_x
-	
+
 	# Execute the signal 
 	def straight(self, img_cen, img_wid, draw):
 		if 'left' in self.intersec_direct and 'right' in self.intersec_direct:
@@ -82,60 +98,126 @@ class Movement: # Movement class
 		
 
 	def left(self, img_cen, img_wid, draw):
-		self.steering_angle += -0.73
+		self.steering_angle += -0.63 # 73
 		self.processing = 'left'
 		blinker(self.processing, draw)
 
 	def right(self, img_cen, img_wid, draw):
-		self.steering_angle += 0.73
+		self.steering_angle += 0.8 # 73
 		self.processing = 'right'
 		blinker(self.processing, draw)
 	
 	# Main proceduce
 	def process(self, im_cen, im_wi, draw):
-		execute = {'left': self.left, 'straight':self.straight, 'right':self.right}
-
-		if len(self.intersec_direct) <= 1: # The straight but in the turn so that the area reach the threshold
+			execute = {'left': self.left, 'straight':self.straight, 'right':self.right}			
 			if isinstance(self.processing, str):
-				self.processing = True
-			elif self.processing is True:
+				if len(self.intersec_direct) > 1:
+					execute[self.processing](im_cen, im_wi, draw)
+					return self.steering_angle
+				else:
+					self.processing = True
+					return self.steering_angle 
+
+			if self.processing is True:
 				self.processing = None
 
-		elif len(self.intersec_direct) == 2: # The 3-intersection, there are two choice
-			if isinstance(self.processing, str):
-				execute[self.processing](im_cen, im_wi, draw)
-			else:
-				if self.sign[0]: # if this intersect has sign
+			
+			if len(self.intersec_direct) <= 1: 
+				self.processing = None 
+
+			elif len(self.intersec_direct) == 2: 
+				
+				if self.sign: 
 					print(self.sign[0], self.intersec_direct)
-					if self.sign[0] in self.intersec_direct: # if this sign is correct
+					if self.sign[0] in self.intersec_direct: 
 						execute[self.sign[0]](im_cen, im_wi, draw)
-					elif 'no_' in self.sign[0]: # If it is a forbidden sign
-						if 'straight' in self.intersec_direct: # If go straight is present, sign is invalid
+					elif 'no_' in self.sign[0]:
+						if 'straight' in self.intersec_direct: 
 							execute['straight'](im_cen, im_wi, draw)
-						else: # Force the sign, one only is avaiable
+						else: 
 							execute['left'](im_cen, im_wi, draw) if self.sign[0] == 'no_right' else execute['right'](im_cen, im_wi, draw)
-					else: # The fake sign
-						if 'straight' in self.intersec_direct: # If go straight is present, sign is invalid
+					else: 
+						if 'straight' in self.intersec_direct: 
 							execute['straight'](im_cen, im_wi, draw)
-						else: # Chose the random sign
+						else: 
 							choice = random.choice(self.intersec_direct)
 							execute[choice](im_cen, im_wi, draw)
 				else:
-					if 'straight' in self.intersec_direct: # If go straight is present, sign is invalid
+					
+					if 'left' in self.intersec_direct:
+						execute['left'](im_cen, im_wi, draw)
+					elif 'straight' in self.intersec_direct: 
 						execute['straight'](im_cen, im_wi, draw)
-					else: # Chose the random sign
-						choice = random.choice(self.intersec_direct)
-						execute[choice](im_cen, im_wi, draw)
-		elif len(self.intersec_direct) == 3: # The 4-intersection
-			if isinstance(self.processing, str):
-				execute[self.processing](im_cen, im_wi, draw)
-			else:
-				if self.sign[0] and self.sign[0] in self.intersec_direct: # If the sign match the direction
+					elif self.intersec_direct:
+						execute[self.intersec_direct[0]](im_cen, im_wi, draw)
+
+			elif len(self.intersec_direct) == 3: 
+				
+				if self.sign and self.sign[0] in self.intersec_direct: 
 					execute[self.sign[0]](im_cen, im_wi, draw)
 				else:
-					execute['straight'](im_cen, im_wi, draw)	
 					
-		return self.steering_angle		
+					if 'right' in self.intersec_direct:
+						execute['right'](im_cen, im_wi, draw)
+					elif 'straight' in self.intersec_direct:
+						execute['straight'](im_cen, im_wi, draw)
+					elif self.intersec_direct: 
+						execute[self.intersec_direct[0]](im_cen, im_wi, draw)
+						
+			return self.steering_angle
+
+
+	# def process(self, im_cen, im_wi, draw):
+	# 	execute = {'left': self.left, 'straight':self.straight, 'right':self.right}
+
+	# 	if len(self.intersec_direct) <= 1: # The straight but in the turn so that the area reach the threshold
+	# 		if isinstance(self.processing, str):
+	# 			self.processing = True
+	# 		elif self.processing is True:
+	# 			self.processing = None
+
+	# 	elif len(self.intersec_direct) == 2: # The 3-intersection, there are two choice
+	# 		if isinstance(self.processing, str):
+	# 			execute[self.processing](im_cen, im_wi, draw)
+	# 		else:
+	# 			if self.sign[0]: # if this intersect has sign
+	# 				print(self.sign[0], self.intersec_direct)
+	# 				if self.sign[0] in self.intersec_direct: # if this sign is correct
+	# 					execute[self.sign[0]](im_cen, im_wi, draw)
+	# 				elif 'no_' in self.sign[0]: # If it is a forbidden sign
+	# 					if 'straight' in self.intersec_direct: # If go straight is present, sign is invalid
+	# 						execute['straight'](im_cen, im_wi, draw)
+	# 					else: # Force the sign, one only is avaiable
+	# 						execute['left'](im_cen, im_wi, draw) if self.sign[0] == 'no_right' else execute['right'](im_cen, im_wi, draw)
+	# 				else: # The fake sign
+	# 					if 'straight' in self.intersec_direct: # If go straight is present, sign is invalid
+	# 						execute['straight'](im_cen, im_wi, draw)
+	# 					else: # Chose the random sign
+	# 						choice = random.choice(self.intersec_direct)
+	# 						execute[choice](im_cen, im_wi, draw)
+	# 			else:
+	# 				# if 'straight' in self.intersec_direct: # If go straight is present, sign is invalid
+	# 				# 	execute['straight'](im_cen, im_wi, draw)
+	# 				# else: # Chose the random sign
+	# 				# 	choice = random.choice(self.intersec_direct)
+	# 				# 	execute[choice](im_cen, im_wi, draw)
+	# 				if 'right' in self.intersec_direct:
+	# 					execute['right'](im_cen, im_wi, draw)
+	# 				elif 'straight' in self.intersec_direct:
+	# 					execute['straight'](im_cen, im_wi, draw)
+	# 				elif self.intersec_direct:
+	# 					execute[self.intersec_direct[0]](im_cen, im_wi, draw)
+						
+	# 	elif len(self.intersec_direct) == 3: # The 4-intersection
+	# 		if isinstance(self.processing, str):
+	# 			execute[self.processing](im_cen, im_wi, draw)
+	# 		else:
+	# 			if self.sign[0] and self.sign[0] in self.intersec_direct: # If the sign match the direction
+	# 				execute[self.sign[0]](im_cen, im_wi, draw)
+	# 			else:
+	# 				execute['straight'](im_cen, im_wi, draw)	
+					
+	# 	return self.steering_angle		
 					
 wheel = Movement() # call the class
 
