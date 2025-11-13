@@ -2,7 +2,7 @@
 
 This project focuses on optimizing code to enable an autonomous car to operate within the web simulation environment found at [https://via.makerviet.org/vi/docs/autonomous-on-simulation/hello-via/](https://via.makerviet.org/vi/docs/autonomous-on-simulation/hello-via/).
 
-![Car demo](./src/Car_sim_demo.mp4)
+![Car demo](./src/demo.gif)
 
 ## Project Overview
 
