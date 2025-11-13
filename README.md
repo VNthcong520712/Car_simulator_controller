@@ -2,6 +2,8 @@
 
 This project focuses on optimizing code to enable an autonomous car to operate within the web simulation environment found at [https://via.makerviet.org/vi/docs/autonomous-on-simulation/hello-via/](https://via.makerviet.org/vi/docs/autonomous-on-simulation/hello-via/).
 
+![Car_simu_video_demo](./src/Car_sim_demo.mp4)
+
 ## Project Overview
 
 This project's core functionality revolves around processing real-time image data streamed via WebSockets from the VIA web simulation. We leverage computer vision (CPV) techniques to handle these images effectively. Our approach includes lane detection based on color, and subsequently, we analyze the size and shape of identified lanes to determine the optimal steering angle for the autonomous car. A key highlight of this project is its efficient design, allowing it to run smoothly on personal computers without needing a dedicated GPU.
