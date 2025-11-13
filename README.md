@@ -3,7 +3,7 @@
 This project focuses on optimizing code to enable an autonomous car to operate within the web simulation environment found at [https://via.makerviet.org/vi/docs/autonomous-on-simulation/hello-via/](https://via.makerviet.org/vi/docs/autonomous-on-simulation/hello-via/).
 
 <video controls="" width="800" height="500" muted="" loop="" autoplay="">
-<source src="./src/Car_sim_demo.mp4" type="video/mp4">
+<source src="https://github.com/VNthcong520712/Car_simulator_controller/blob/main/src/Car_sim_demo.mp4" type="video/mp4">
 </video>
 
 ## Project Overview
@@ -42,5 +42,6 @@ This project is a collaborative effort by:
 ## Repository
 
 The project's code is hosted on GitHub: [https://github.com/VNthcong520712/Car\_simulator\_controller](https://github.com/VNthcong520712/Car_simulator_controller)
+
 
 
